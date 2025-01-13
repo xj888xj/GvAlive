@@ -1,57 +1,45 @@
-name: Send Random Message
+name: Autosend
 
 on:
   push:
     branches: master
   schedule:
-    - cron: '0 8 * * *' # 每天的UTC时间08:00执行
+    - cron: '30 0 */10 * *' # 每10天的UTC时间08:30执行
   workflow_dispatch:
+    inputs: {}
 
 jobs:
-  send-message:
+  autosend:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Create Message File
+      - uses: actions/checkout@v2
+      
+      - name: Prepare Random Chat Message
+        id: prepare_message
         run: |
-          echo "Hey! How's your day going?" >> messages.txt
-          echo "Did you catch the latest episode of that show?" >> messages.txt
-          echo "What are you up to this weekend?" >> messages.txt
-          echo "I tried that new coffee shop yesterday. It was amazing!" >> messages.txt
-          echo "Have you read any good books lately?" >> messages.txt
-          echo "What's your favorite way to unwind after a long day?" >> messages.txt
-          echo "I just discovered a new podcast. You should check it out!" >> messages.txt
-          echo "Did you see that viral video everyone is talking about?" >> messages.txt
-          echo "How's work treating you these days?" >> messages.txt
-          echo "Any plans for the upcoming holidays?" >> messages.txt
-          echo "I finally watched that movie you recommended. It was great!" >> messages.txt
-          echo "What's your go-to comfort food?" >> messages.txt
-          echo "Have you been on any fun trips recently?" >> messages.txt
-          echo "What's your favorite thing about this time of year?" >> messages.txt
-          echo "Did you hear about that new restaurant opening downtown?" >> messages.txt
-          echo "How do you stay motivated during tough times?" >> messages.txt
-          echo "What's your favorite way to stay active?" >> messages.txt
-          echo "Have you picked up any new hobbies lately?" >> messages.txt
-          echo "What's the best piece of advice you've ever received?" >> messages.txt
-          echo "If you could travel anywhere right now, where would you go?" >> messages.txt
+          # 随机选择一条闲聊消息
+          messages=(
+            "Hey! How's your day going?"
+            "Did you catch the latest episode of that show we like?"
+            "What are your plans for the weekend?"
+            "I tried that new coffee place yesterday. It was amazing!"
+            "Have you read any good books lately?"
+            "What's your favorite movie right now?"
+            "I just got back from hiking. The views were incredible!"
+            "Are you still working on that project? How's it coming along?"
+            "I found a great recipe for dinner. Want me to share it?"
+            "Did you hear about that new game coming out? Looks fun!"
+          )
+          random_message=${messages[$RANDOM % ${#messages[@]}]}
+          echo "MESSAGE=$random_message" >> $GITHUB_ENV
 
-      - name: Select Random Message
-        id: select_message
-        run: |
-          # 随机选择一条消息
-          messages=($(cat messages.txt))
-          random_index=$((RANDOM % ${#messages[@]}))
-          echo "MESSAGE=${messages[$random_index]}" >> $GITHUB_ENV
-
-      - name: Send Message
+      - name: Send Message to GroupMe
         uses: joelwmale/webhook-action@master
         with:
           url: "https://api.groupme.com/v3/bots/post"
           body: '{"text": "${{ env.MESSAGE }}", "bot_id": "${{ secrets.GM_BOT_ID }}" }'
-
+      
       - name: Random Delay
         run: |
           # 添加随机延迟，范围为 1 到 5 分钟
