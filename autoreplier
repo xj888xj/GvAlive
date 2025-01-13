@@ -1,0 +1,55 @@
+function autoReplier() {
+  var labelObj = GmailApp.getUserLabelByName('autoreply');
+
+  // 检查标签是否存在
+  if (!labelObj) {
+    console.error('标签 "autoreply" 不存在，请检查标签名称。');
+    return; // 退出函数
+  }
+
+  var gmailThreads = labelObj.getThreads();
+  var maxReplies = 9;  // 允许的最大回复次数
+  var waitHours = 12;  // 回复之间的等待时间
+
+  var quotes = [
+    "Thank you for reaching out! I'll get back to you shortly.",
+    "I appreciate your message. I'm currently out of the office and will respond as soon as I return.",
+    "Thanks for your email! I've received your message and will review it soon.",
+    "Thank you for your request! I’ll check my calendar and get back to you with a suitable time.",
+    "Thanks for your feedback! I value your input and will take it into consideration.",
+    "I appreciate your message regarding support. I’ll look into this and respond as soon as possible.",
+    "Thank you for the update! I’ll review the details and get back to you with my thoughts.",
+    "Thanks for following up! I’ll respond to your previous message shortly.",
+    "Hi! I just wanted to let you know I've received your message and will reply soon.",
+    "Hey there! Got your message. I’ll get back to you as soon as I can!"
+  ];
+
+  try {
+    for (var gg = 0; gg < gmailThreads.length; gg++) {
+      var messages = gmailThreads[gg].getMessages();
+      var messageCount = messages.length;
+
+      for (var ii = 0; ii < messageCount; ii++) {
+        if (messages[ii].isUnread()) {
+          var sender = messages[ii].getFrom();
+          var randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
+          if (messageCount < maxReplies) {
+            MailApp.sendEmail(sender, "自动回复", randomQuote);
+          } else if (messageCount >= maxReplies) {
+            var lastReplyTime = messages[messageCount - 1].getDate().getTime();
+            var firstReplyTime = messages[messageCount - maxReplies].getDate().getTime();
+            if ((lastReplyTime - firstReplyTime) > waitHours * 60 * 60 * 1000) {
+              MailApp.sendEmail(sender, "自动回复", "您好！我们已经发了好几条信息了，可以停下来休息一下了！本短信由 Google Apps Script 自动发出。");
+            }
+          }
+
+          messages[ii].markRead();
+          messages[ii].moveToTrash();
+        }
+      }
+    }
+  } catch (err) {
+    console.error('循环错误: ' + err);
+  }
+}
