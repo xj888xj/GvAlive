@@ -39,10 +39,4 @@ jobs:
         with:
           url: "https://api.groupme.com/v3/bots/post"
           body: '{"text": "${{ env.MESSAGE }}", "bot_id": "${{ secrets.GM_BOT_ID }}" }'
-      
-      - name: Random Delay
-        run: |
-          # 添加随机延迟，范围为 1 到 5 分钟
-          delay=$((RANDOM % 300 + 60)) # 60 到 360 秒
-          echo "Sleeping for $delay seconds..."
-          sleep $delay
+
